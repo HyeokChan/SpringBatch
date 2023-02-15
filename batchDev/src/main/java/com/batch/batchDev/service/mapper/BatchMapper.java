@@ -19,4 +19,6 @@ import java.util.List;
 @Mapper
 public interface BatchMapper {
     List<NllpVO> findNllpList(NllpVO inVO) throws Exception;
+    int instNllpInfo(NllpVO inVO) throws Exception;
+    int updtNllpInfo(NllpVO inVO) throws Exception;
 }

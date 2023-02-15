@@ -44,4 +44,5 @@ public class NllpVO {
     private String lotnoAlAddr;
     private String lgoNm;
     private String mtnSeNm;
+    private String newNllpAcbKey;
 }

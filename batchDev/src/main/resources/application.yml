@@ -31,3 +31,4 @@ mybatis:
     map-underscore-to-camel-case: true
     # mybatis ?? #{xxx} null ??
     jdbc-type-for-null: varchar
+  #executor-type: batch

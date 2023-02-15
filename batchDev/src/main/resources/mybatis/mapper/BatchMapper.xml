@@ -30,7 +30,63 @@
              , a.rm_cn
           from tb_nllp_acb a
          where a.land_ar <![CDATA[ > ]]> #{landAr}
+           and a.nllp_acb_key <![CDATA[ < ]]> '20230000046'
         <include refid="com.batch.batchDev.service.mapper.BatchMapper.pagingTrailer"></include>
     </select>
+
+    <insert id="instNllpInfo" parameterType="nllpVO">
+        <selectKey resultType="string" keyProperty="newNllpAcbKey" order="BEFORE">
+            select fn_crt_acb_key('nllpAcb')
+            from dual
+        </selectKey>
+        insert
+        into tb_nllp_acb(
+          nllp_acb_key
+        , nllp_acb_no
+        , nllp_nm
+        , land_ar
+        , oalp
+        , oalp_yr
+        , zip
+        , stdg_cd
+        , mno
+        , sno
+        , ldcg_cd
+        , rm_cn
+        , init_user_id
+        , init_date
+        , updt_user_id
+        , updt_date
+        )
+        values (
+        #{newNllpAcbKey}
+        , (select lpad(nvl(max(t1.nllp_acb_no), 0)+1, 6, '0')
+            from tb_nllp_acb t1)
+        , #{nllpNm}
+        , nvl(#{landAr}, 0)
+        , nvl(#{oalp}, 0)
+        , #{oalpYr}
+        , #{zip}
+        , #{stdgCd}
+        , #{mno}
+        , #{sno}
+        , #{ldcgCd}
+        , #{rmCn}
+        , 'batch'
+        , sysdate
+        , 'batch'
+        , sysdate
+        )
+    </insert>
+
+    <update id="updtNllpInfo" parameterType="nllpVO">
+        update tb_nllp_acb
+           set land_ar = land_ar + 1
+             , init_user_id = 'batchSource'
+             , init_date = sysdate
+             , updt_user_id = 'batchSource'
+             , updt_date = sysdate
+         where nllp_acb_key = #{nllpAcbKey}
+    </update>
 
 </mapper>

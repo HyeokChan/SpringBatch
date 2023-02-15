@@ -1,5 +1,7 @@
 package com.batch.batchDev.master;
 
+import com.batch.batchDev.master.writer.InstItemWriter;
+import com.batch.batchDev.master.writer.UpdtItemWriter;
 import com.batch.batchDev.service.vo.NllpVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,30 +16,31 @@ import org.springframework.batch.core.configuration.annotation.JobBuilderFactory
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
-import org.springframework.batch.item.ItemWriter;
+import org.springframework.batch.item.support.CompositeItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.bind.annotation.RequestMapping;
 
+import javax.print.attribute.standard.JobName;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * packageName    : com.batch.batchDev.master
- * fileName       : MyBatisChunkJobConfiguration
+ * fileName       : MyBatisChunkCompositeJobConfiguration
  * author         : hyeokchan
- * date           : 2023/02/15
+ * date           : 2023/02/16
  * description    :
  * ===========================================================
  * DATE              AUTHOR             NOTE
  * -----------------------------------------------------------
- * 2023/02/15        hyeokchan       최초 생성
+ * 2023/02/16        hyeokchan       최초 생성
  */
 @Configuration
 @Slf4j
 @RequiredArgsConstructor
-public class MyBatisChunkJobConfiguration {
+public class MyBatisChunkCompositeJobConfiguration {
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
 
@@ -46,26 +49,34 @@ public class MyBatisChunkJobConfiguration {
     @Autowired
     SqlSessionFactory sqlSessionFactory;
 
-    @Bean
-    public Job myBatisChunkJob() {
-        return jobBuilderFactory.get("myBatisChunkJob")
+    private final String JOB_NAME = "myBatisChunkComposite";
+
+    @Autowired
+    UpdtItemWriter updtItemWriter;
+
+    @Autowired
+    InstItemWriter instItemWriter;
+
+    @Bean(JOB_NAME)
+    public Job job() {
+        return jobBuilderFactory.get(JOB_NAME)
                 .incrementer(new RunIdIncrementer()) // 자동 생성
-                .start(myBatisChunkJobStep01())
+                .start(step01())
                 .build();
     }
 
-    @Bean
-    public Step myBatisChunkJobStep01() {
-        return stepBuilderFactory.get("myBatisChunkJobStep01")
+    @Bean(JOB_NAME+"Step01")
+    public Step step01() {
+        return stepBuilderFactory.get(JOB_NAME+"Step01")
                 .<NllpVO, NllpVO>chunk(chunkSize)
-                .reader(myBatisItemReader())
-                .writer(myBatisItemWriter())
+                .reader(itemReader())
+                .writer(compositeItemWriter())
                 .build();
     }
 
-    @Bean
+    @Bean(JOB_NAME+"ItemReader")
     @StepScope
-    public MyBatisPagingItemReader<NllpVO> myBatisItemReader() {
+    public MyBatisPagingItemReader<NllpVO> itemReader() {
         Map<String, Object> parameterValues = new HashMap<>();
         parameterValues.put("landAr", "0");
         return new MyBatisPagingItemReaderBuilder<NllpVO>()
@@ -76,12 +87,33 @@ public class MyBatisChunkJobConfiguration {
                 .build();
     }
 
-    @Bean
+    @Bean(JOB_NAME+"CompositeItemWriter")
     @StepScope
-    public MyBatisBatchItemWriter<NllpVO> myBatisItemWriter() {
+    public CompositeItemWriter<NllpVO> compositeItemWriter() {
+        final CompositeItemWriter<NllpVO> compositeItemWriter = new CompositeItemWriter<>();
+//        compositeItemWriter.setDelegates(Arrays.asList(myBatisItemWriter01(), myBatisItemWriter02()));
+//        compositeItemWriter.setDelegates(Arrays.asList(myBatisItemWriter01(), updtItemWriter));
+        compositeItemWriter.setDelegates(Arrays.asList(instItemWriter, updtItemWriter));
+        return compositeItemWriter;
+    }
+
+    @Bean(JOB_NAME+"myBatisItemWriter01")
+    @StepScope
+    public MyBatisBatchItemWriter<NllpVO> myBatisItemWriter01() {
         return new MyBatisBatchItemWriterBuilder<NllpVO>()
                 .sqlSessionFactory(sqlSessionFactory)
                 .statementId("com.batch.batchDev.service.mapper.BatchMapper.instNllpInfo")
                 .build();
     }
+
+    @Bean(JOB_NAME+"myBatisItemWriter02")
+    @StepScope
+    public MyBatisBatchItemWriter<NllpVO> myBatisItemWriter02() {
+        return new MyBatisBatchItemWriterBuilder<NllpVO>()
+                .sqlSessionFactory(sqlSessionFactory)
+                .statementId("com.batch.batchDev.service.mapper.BatchMapper.updtNllpInfo")
+                .build();
+    }
+
+
 }
