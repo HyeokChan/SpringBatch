@@ -1,0 +1,33 @@
+spring:
+  datasource:
+    url: jdbc:log4jdbc:oracle:thin:@10.211.55.3:1521/orcl
+    username: c##chan
+    password: gurcks258
+    driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
+    hikari:
+      connection-timeout: 3000
+      validation-timeout: 3000
+      minimum-idle: 5
+      maximum-pool-size: 20
+      idle-timeout: 200000
+      max-lifetime: 240000
+      pool-name: oraPool
+  batch:
+    jdbc:
+      initialize-schema: never
+      # ORA-08177: can't serialize access for this transaction (? ????? ?? ??? ???? ? ? ????) ?? ??
+      isolation-level-for-create: default
+    job:
+      # parameter? ??? job name? ?? ??
+      names: ${job.name:NONE}
+
+mybatis:
+  # alias ??? ??? ? ?? ?? ??
+  type-aliases-package: com.batch.batchDev
+  # resources ???? ??? mapper ?? ??
+  mapper-locations: mybatis/mapper/*.xml
+  configuration:
+    # ????? ?????? ???? ??? ??
+    map-underscore-to-camel-case: true
+    # mybatis ?? #{xxx} null ??
+    jdbc-type-for-null: varchar

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.batch.batchDev.service.mapper.BatchMapper">
+
+    <sql id="pagingHeader">
+        select * from (
+                          select t.*, rownum rn
+                          from (
+    </sql>
+    <sql id="pagingTrailer">
+        ) t
+            where rownum <![CDATA[ <= ]]> (#{_page}+1)*#{_pagesize}
+        ) where rn <![CDATA[ > ]]> (#{_page}*#{_pagesize})
+    </sql>
+
+    <!--재산자료 목록조회-->
+    <select id="findNllpList" parameterType="nllpVO" resultType="nllpVO">
+        <include refid="com.batch.batchDev.service.mapper.BatchMapper.pagingHeader"></include>
+        select a.nllp_acb_key
+             , a.nllp_acb_no
+             , a.nllp_nm
+             , nvl(a.land_ar, 0) as land_ar
+             , nvl(a.oalp, 0) as oalp
+             , a.oalp_yr
+             , a.zip
+             , a.stdg_cd
+             , a.mno
+             , a.sno
+             , a.ldcg_cd
+             , a.rm_cn
+          from tb_nllp_acb a
+         where a.land_ar <![CDATA[ > ]]> #{landAr}
+        <include refid="com.batch.batchDev.service.mapper.BatchMapper.pagingTrailer"></include>
+    </select>
+
+</mapper>
